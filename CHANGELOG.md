@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-04 - piwigo-gallery 1.1.1
+
+- Fix: a recently created or renamed album was reported as "not found" for up to 10 minutes because the album list is cached. The list is now reloaded once from Piwigo before giving up.
+
 ## 2026-11-04 - piwigo-gallery 1.1.0
 
 - Fix: photos from other albums could be mixed into the requested album. The API is now queried with the album id (`cat_id`) and no recursion, and the cache key changed (`v7`).

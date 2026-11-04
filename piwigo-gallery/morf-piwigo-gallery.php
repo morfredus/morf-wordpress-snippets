@@ -3,7 +3,7 @@
  * Plugin Name: morf Piwigo Gallery
  * Plugin URI:  https://github.com/morfredus/morf-wordpress-snippets/tree/main/piwigo-gallery
  * Description: Shortcode [morf_piwigo] : affiche un album Piwigo (public) dans WordPress, avec visionneuse et EXIF, sans copier les images.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      morfredus
  * Author URI:  https://morfredus.fr
  * License:     GPL-3.0-only
@@ -37,7 +37,7 @@ define('MORF_PIWIGO_API', 'https://votre-piwigo.exemple/ws.php');
 /**
  * Interrogation de l'API Piwigo avec cache.
  */
-function morf_piwigo_api($params, $cache_time = 600) {
+function morf_piwigo_api($params, $cache_time = 600, $force = false) {
 
     $params['format'] = 'json';
 
@@ -46,7 +46,7 @@ function morf_piwigo_api($params, $cache_time = 600) {
 
     $cached = get_transient($cache_key);
 
-    if ($cached !== false) {
+    if ($cached !== false && !$force) {
         return $cached;
     }
 
@@ -91,12 +91,12 @@ function morf_piwigo_api($params, $cache_time = 600) {
 /**
  * Récupération des albums.
  */
-function morf_piwigo_get_albums() {
+function morf_piwigo_get_albums($force = false) {
 
     $response = morf_piwigo_api(array(
         'method'    => 'pwg.categories.getList',
         'recursive' => 'true',
-    ));
+    ), 600, $force);
 
     if (is_wp_error($response)) {
         return $response;
@@ -262,25 +262,23 @@ function morf_piwigo_shortcode($atts) {
         $texte = 'titre';
     }
 
-    $albums = morf_piwigo_get_albums();
-
-    if (is_wp_error($albums)) {
-        return '<p>Erreur Piwigo : ' . esc_html($albums->get_error_message()) . '</p>';
-    }
-
-    $album_id = 0;
     $target_clean = morf_clean_string($raw_album_name);
+    $album_id     = 0;
 
-    foreach ($albums as $album) {
-        if (!isset($album['id'], $album['name'])) {
-            continue;
+    // Album introuvable dans la liste en cache (album créé ou renommé récemment) :
+    // on recharge la liste une fois depuis Piwigo avant de conclure.
+    foreach (array(false, true) as $force) {
+        $albums = morf_piwigo_get_albums($force);
+
+        if (is_wp_error($albums)) {
+            return '<p>Erreur Piwigo : ' . esc_html($albums->get_error_message()) . '</p>';
         }
 
-        $current_clean = morf_clean_string($album['name']);
-
-        if ($current_clean === $target_clean) {
-            $album_id = intval($album['id']);
-            break;
+        foreach ($albums as $album) {
+            if (isset($album['id'], $album['name']) && morf_clean_string($album['name']) === $target_clean) {
+                $album_id = intval($album['id']);
+                break 2;
+            }
         }
     }
 
