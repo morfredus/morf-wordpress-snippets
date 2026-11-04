@@ -46,7 +46,7 @@ Piwigo continue de gérer les photographies et leurs albums. WordPress reste l'e
 
 | Paramètre | Défaut | Rôle |
 | --- | --- | --- |
-| `album` | *(obligatoire)* | Nom exact de l'album Piwigo (sans tenir compte des majuscules). |
+| `album` | *(obligatoire)* | Nom de l'album Piwigo. Les majuscules, les espaces multiples et les différents tirets (-, –, —) sont ignorés. |
 | `limit` | `0` | Nombre de photographies. `0` signifie jusqu'à 500. |
 | `texte` | `titre` | Légende affichée : `titre` ou `description`. |
 

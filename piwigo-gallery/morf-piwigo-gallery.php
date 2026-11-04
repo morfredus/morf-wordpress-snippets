@@ -3,7 +3,7 @@
  * Plugin Name: morf Piwigo Gallery
  * Plugin URI:  https://github.com/morfredus/morf-wordpress-snippets/tree/main/piwigo-gallery
  * Description: Shortcode [morf_piwigo] : affiche un album Piwigo (public) dans WordPress, avec visionneuse et EXIF, sans copier les images.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      morfredus
  * Author URI:  https://morfredus.fr
  * License:     GPL-3.0-only
@@ -22,7 +22,7 @@
  * [morf_piwigo album="Rouille" limit="13" texte="titre"]
  *
  * Paramètres :
- * album  : nom exact de l'album Piwigo
+ * album  : nom de l'album Piwigo (majuscules, accents des tirets et espaces multiples tolérés)
  * limit  : nombre de photos (0 = jusqu'à 500)
  * texte  : titre ou description
  */
@@ -41,7 +41,8 @@ function morf_piwigo_api($params, $cache_time = 600) {
 
     $params['format'] = 'json';
 
-    $cache_key = 'morf_piwigo_v6_' . md5(wp_json_encode($params));
+    // Clé de cache basée sur l'intégralité des paramètres de requête
+    $cache_key = 'morf_piwigo_v7_' . md5(wp_json_encode($params));
 
     $cached = get_transient($cache_key);
 
@@ -111,15 +112,17 @@ function morf_piwigo_get_albums() {
 }
 
 /**
- * Récupération des photos d'un album.
+ * Récupération stricte des photos d'un album donné (sans récursion).
  */
 function morf_piwigo_get_images($album_id, $limit) {
 
     $response = morf_piwigo_api(array(
-        'method'    => 'pwg.categories.getImages',
-        'id'        => $album_id,
-        'recursive' => 'false',
-        'per_page'  => ($limit > 0) ? $limit : 500,
+        'method'      => 'pwg.categories.getImages',
+        'cat_id'      => intval($album_id),
+        'id'          => intval($album_id),
+        'recursive'   => 'false',
+        'f_recursive' => 'false',
+        'per_page'    => ($limit > 0) ? $limit : 500,
     ));
 
     if (is_wp_error($response)) {
@@ -156,7 +159,6 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
     $shutter  = '';
     $iso      = '';
 
-    // Téléchargement sécurisé des 64 premiers Ko de l'image (suffisant pour le header EXIF)
     $response = wp_remote_get($image_url, array(
         'timeout' => 5,
         'headers' => array('Range' => 'bytes=0-65535'),
@@ -165,12 +167,10 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
     if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) < 400) {
         $body = wp_remote_retrieve_body($response);
         if (!empty($body)) {
-            // Lecture du flux mémoire via data-wrapper PHP
             $stream = 'data://image/jpeg;base64,' . base64_encode($body);
             $exif = @exif_read_data($stream);
 
             if ($exif && is_array($exif)) {
-                // 1. Modèle
                 $make = trim($exif['Make'] ?? '');
                 $model = trim($exif['Model'] ?? '');
                 if ($make && $model && stripos($model, $make) !== false) {
@@ -179,7 +179,6 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
                     $camera = trim($make . ' ' . $model);
                 }
 
-                // 2. Focale
                 if (!empty($exif['FocalLength'])) {
                     $parts = explode('/', (string)$exif['FocalLength']);
                     $val = (count($parts) === 2 && (float)$parts[1] > 0)
@@ -190,7 +189,6 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
                     }
                 }
 
-                // 3. Ouverture (FNumber)
                 if (!empty($exif['FNumber'])) {
                     $parts = explode('/', (string)$exif['FNumber']);
                     $val = (count($parts) === 2 && (float)$parts[1] > 0)
@@ -201,12 +199,10 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
                     }
                 }
 
-                // 4. Durée d'exposition
                 if (!empty($exif['ExposureTime'])) {
                     $shutter = (string)$exif['ExposureTime'] . 's';
                 }
 
-                // 5. ISO
                 if (!empty($exif['ISOSpeedRatings'])) {
                     $iso_val = is_array($exif['ISOSpeedRatings']) ? reset($exif['ISOSpeedRatings']) : $exif['ISOSpeedRatings'];
                     if (!empty($iso_val)) {
@@ -217,7 +213,6 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
         }
     }
 
-    // Repli pour le modèle si la lecture d'en-tête échoue
     if (empty($camera) && !empty($file_name)) {
         if (preg_match('/_(.+?)_\d+\.[a-zA-Z0-9]+$/', $file_name, $matches)) {
             $camera = trim($matches[1]);
@@ -233,6 +228,18 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
 }
 
 /**
+ * Fonction de nettoyage et normalisation de chaînes pour comparaison d'albums
+ */
+function morf_clean_string($str) {
+    $str = html_entity_decode($str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Remplacement des tirets spéciaux (demi-cadratin, cadratin) par un tiret simple
+    $str = str_replace(array('–', '—', '−'), '-', $str);
+    // Suppression des espaces multiples et espaces insécables
+    $str = preg_replace('/\s+/u', ' ', $str);
+    return mb_strtolower(trim($str), 'UTF-8');
+}
+
+/**
  * Shortcode principal.
  */
 function morf_piwigo_shortcode($atts) {
@@ -243,11 +250,11 @@ function morf_piwigo_shortcode($atts) {
         'texte' => 'titre',
     ), $atts, 'morf_piwigo');
 
-    $album_name = sanitize_text_field($atts['album']);
-    $limit      = max(0, intval($atts['limit']));
-    $texte      = strtolower(sanitize_key($atts['texte']));
+    $raw_album_name = (string)$atts['album'];
+    $limit          = max(0, intval($atts['limit']));
+    $texte          = strtolower(sanitize_key($atts['texte']));
 
-    if ($album_name === '') {
+    if (trim($raw_album_name) === '') {
         return '<p>Erreur : aucun album Piwigo indiqué.</p>';
     }
 
@@ -262,19 +269,23 @@ function morf_piwigo_shortcode($atts) {
     }
 
     $album_id = 0;
+    $target_clean = morf_clean_string($raw_album_name);
 
     foreach ($albums as $album) {
-        if (
-            isset($album['name'], $album['id']) &&
-            mb_strtolower(trim($album['name'])) === mb_strtolower(trim($album_name))
-        ) {
+        if (!isset($album['id'], $album['name'])) {
+            continue;
+        }
+
+        $current_clean = morf_clean_string($album['name']);
+
+        if ($current_clean === $target_clean) {
             $album_id = intval($album['id']);
             break;
         }
     }
 
     if (!$album_id) {
-        return '<p>Album Piwigo introuvable : ' . esc_html($album_name) . '</p>';
+        return '<p>Album Piwigo introuvable : ' . esc_html($raw_album_name) . '</p>';
     }
 
     $images = morf_piwigo_get_images($album_id, $limit);
@@ -284,7 +295,7 @@ function morf_piwigo_shortcode($atts) {
     }
 
     if (empty($images)) {
-        return '<p>Aucune photographie dans cet album.</p>';
+        return '<p>Aucune photographie dans cet album (' . esc_html($raw_album_name) . ').</p>';
     }
 
     if ($limit > 0) {
@@ -327,7 +338,6 @@ function morf_piwigo_shortcode($atts) {
                     continue;
                 }
 
-                // Extraction stricte des 5 paramètres EXIF
                 $exif_text = morf_piwigo_get_strict_exif($full, $image['file'] ?? '');
 
                 ?>
@@ -588,11 +598,7 @@ function morf_piwigo_shortcode($atts) {
 
     <script>
     (function () {
-
-        const root = document.getElementById(
-            <?php echo wp_json_encode($gallery_id); ?>
-        );
-
+        const root = document.getElementById(<?php echo wp_json_encode($gallery_id); ?>);
         if (!root || root.dataset.initialized) return;
         root.dataset.initialized = '1';
 
@@ -601,20 +607,14 @@ function morf_piwigo_shortcode($atts) {
         const caption = root.querySelector('.morf-caption');
         const exifBadge = root.querySelector('.morf-exif');
         const counter = root.querySelector('.morf-counter');
-
-        const links = Array.from(
-            root.querySelectorAll('.morf-photo')
-        );
+        const links = Array.from(root.querySelectorAll('.morf-photo'));
 
         let current = 0;
 
         function update() {
-
             const link = links[current];
-
             largeImage.src = link.dataset.full;
             largeImage.alt = link.querySelector('img').alt;
-
             caption.textContent = link.dataset.title || '';
 
             const exifData = link.dataset.exif || '';
@@ -625,76 +625,51 @@ function morf_piwigo_shortcode($atts) {
         }
 
         function open(index) {
-
             current = index;
             update();
-
             lightbox.classList.add('is-open');
             lightbox.setAttribute('aria-hidden', 'false');
-
             document.body.style.overflow = 'hidden';
         }
 
         function close() {
-
             lightbox.classList.remove('is-open');
             lightbox.setAttribute('aria-hidden', 'true');
-
             document.body.style.overflow = '';
         }
 
         function move(direction) {
-
-            current = (
-                current + direction + links.length
-            ) % links.length;
-
+            current = (current + direction + links.length) % links.length;
             update();
         }
 
         links.forEach((link, index) => {
-
             link.addEventListener('click', event => {
-
                 event.preventDefault();
                 open(index);
-
             });
-
         });
 
-        root.querySelector('.morf-close')
-            .addEventListener('click', close);
-
-        root.querySelector('.morf-prev')
-            .addEventListener('click', () => move(-1));
-
-        root.querySelector('.morf-next')
-            .addEventListener('click', () => move(1));
+        root.querySelector('.morf-close').addEventListener('click', close);
+        root.querySelector('.morf-prev').addEventListener('click', () => move(-1));
+        root.querySelector('.morf-next').addEventListener('click', () => move(1));
 
         lightbox.addEventListener('click', event => {
-
             if (event.target === lightbox) {
                 close();
             }
-
         });
 
         document.addEventListener('keydown', event => {
-
             if (!lightbox.classList.contains('is-open')) return;
-
             if (event.key === 'Escape') close();
             if (event.key === 'ArrowLeft') move(-1);
             if (event.key === 'ArrowRight') move(1);
-
         });
-
     })();
     </script>
 
     <?php
-
     return ob_get_clean();
 }
 

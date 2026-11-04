@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-04 - piwigo-gallery 1.1.0
+
+- Fix: photos from other albums could be mixed into the requested album. The API is now queried with the album id (`cat_id`) and no recursion, and the cache key changed (`v7`).
+- Album names are compared after normalisation (case, spaces, dash variants, HTML entities).
+- The "no photo" message now names the album.
+
 ## 2026-11-04 - first wave of snippets
 
 - `instant-navigation` 1.0.0: prefetching and LCP image priority.

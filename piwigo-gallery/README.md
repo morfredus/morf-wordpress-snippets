@@ -46,7 +46,7 @@ Written for [morfredus.fr](https://morfredus.fr), shared as is. The story behind
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
-| `album` | *(required)* | Exact name of the Piwigo album (case-insensitive). |
+| `album` | *(required)* | Name of the Piwigo album. Case, extra spaces and the different dash characters (-, –, —) are ignored. |
 | `limit` | `0` | Number of photographs. `0` means up to 500. |
 | `texte` | `titre` | Caption shown: `titre` (title) or `description`. |
 
