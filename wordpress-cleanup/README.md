@@ -28,7 +28,7 @@ Each block is independent: delete the ones you do not want.
 
 Use it **either** way:
 
-- **As a plugin**: copy `morf-wordpress-cleanup.php` into `wp-content/plugins/` and activate it.
+- **As a plugin**: put `morf-wordpress-cleanup.php` in its own folder, `wp-content/plugins/morf-wordpress-cleanup/morf-wordpress-cleanup.php`, and activate it.
 - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
 
 ## License

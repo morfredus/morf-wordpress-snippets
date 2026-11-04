@@ -32,7 +32,7 @@ add_filter( 'morf_webp_delete_original', '__return_true' );
 
 Use it **either** way:
 
-- **As a plugin**: copy `morf-webp-conversion.php` into `wp-content/plugins/` and activate it.
+- **As a plugin**: put `morf-webp-conversion.php` in its own folder, `wp-content/plugins/morf-webp-conversion/morf-webp-conversion.php`, and activate it.
 - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
 
 ## License

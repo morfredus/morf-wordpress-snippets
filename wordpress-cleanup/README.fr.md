@@ -28,7 +28,7 @@ Chaque bloc est indépendant : supprimez ceux dont vous n'avez pas besoin.
 
 Utilisez-le **au choix** :
 
-- **En extension** : copiez `morf-wordpress-cleanup.php` dans `wp-content/plugins/` et activez-la.
+- **En extension** : placez `morf-wordpress-cleanup.php` dans son propre dossier, `wp-content/plugins/morf-wordpress-cleanup/morf-wordpress-cleanup.php`, et activez-la.
 - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
 
 ## Licence

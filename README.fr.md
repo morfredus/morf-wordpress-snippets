@@ -4,7 +4,7 @@ Petits snippets WordPress autonomes, issus de [morfredus.fr](https://morfredus.f
 
 > English: [README.md](README.md)
 
-Chaque snippet a son dossier et son propre README. La plupart tiennent dans un seul fichier PHP, utilisable comme snippet (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) ou déposé dans `wp-content/plugins/` quand le fichier a un en-tête d'extension. Aucune dépendance, aucune compilation.
+Chaque snippet a son dossier et son propre README. La plupart tiennent dans un seul fichier PHP, utilisable comme snippet (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) ou installé comme extension, dans son propre dossier de `wp-content/plugins/`, quand le fichier a un en-tête d'extension. Aucune dépendance, aucune compilation.
 
 ## Snippets
 

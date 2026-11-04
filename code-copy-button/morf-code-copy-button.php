@@ -9,7 +9,7 @@
  * License:     GPL-3.0-only
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
- * Utilisable comme extension (un seul fichier dans wp-content/plugins/) ou comme snippet
+ * Utilisable comme extension (dans son propre dossier : wp-content/plugins/<nom>/<nom>.php) ou comme snippet
  * (Code Snippets : coller le code sans la première ligne <?php).
  *
  * Personnalisation : la couleur du bouton se règle avec la variable CSS --morf-copy-bg

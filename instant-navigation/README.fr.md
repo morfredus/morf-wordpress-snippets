@@ -21,7 +21,7 @@ Navigation quasi instantanée (préchargement) et priorité de chargement de l'i
 
 Utilisez-le **au choix** :
 
-- **En extension** : copiez `morf-instant-navigation.php` dans `wp-content/plugins/` et activez-la.
+- **En extension** : placez `morf-instant-navigation.php` dans son propre dossier, `wp-content/plugins/morf-instant-navigation/morf-instant-navigation.php`, et activez-la.
 - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
 
 ## Licence

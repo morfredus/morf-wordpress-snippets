@@ -28,7 +28,7 @@ La couleur du bouton se règle avec une variable CSS. Dans le CSS additionnel de
 
 Utilisez-le **au choix** :
 
-- **En extension** : copiez `morf-code-copy-button.php` dans `wp-content/plugins/` et activez-la.
+- **En extension** : placez `morf-code-copy-button.php` dans son propre dossier, `wp-content/plugins/morf-code-copy-button/morf-code-copy-button.php`, et activez-la.
 - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
 
 ## Licence

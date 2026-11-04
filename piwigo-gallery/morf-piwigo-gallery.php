@@ -3,14 +3,14 @@
  * Plugin Name: morf Piwigo Gallery
  * Plugin URI:  https://github.com/morfredus/morf-wordpress-snippets/tree/main/piwigo-gallery
  * Description: Shortcode [morf_piwigo] : affiche un album Piwigo (public) dans WordPress, avec visionneuse et EXIF, sans copier les images.
- * Version:     1.1.1
+ * Version:     1.3.0
  * Author:      morfredus
  * Author URI:  https://morfredus.fr
  * License:     GPL-3.0-only
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: morf-piwigo-gallery
  *
- * Utilisable comme extension (un seul fichier dans wp-content/plugins/) ou comme snippet
+ * Utilisable comme extension (dans son propre dossier : wp-content/plugins/<nom>/<nom>.php) ou comme snippet
  * (Code Snippets : coller le code sans la première ligne <?php).
  *
  * Ne lit que les albums publics de Piwigo. Les EXIF sont lus dans les fichiers servis
@@ -31,8 +31,90 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// À adapter : adresse de l'API de VOTRE Piwigo (ws.php à la racine de l'installation).
+/* =============================================================================
+ * RÉGLAGES : c'est la seule partie à modifier.
+ * ========================================================================== */
+
+// Adresse de l'API de VOTRE Piwigo (ws.php à la racine de l'installation).
 define('MORF_PIWIGO_API', 'https://votre-piwigo.exemple/ws.php');
+
+/*
+ * Apparence de la galerie. Une ligne = un réglage. La valeur peut être :
+ *   - un code couleur            : '#D8D2C8', 'rgb(216, 210, 200)', 'rgba(0, 0, 0, .45)'
+ *   - une variable de votre thème : 'var(--theme-palette-color-5)'   (voir le README pour votre thème)
+ *   - une couleur du thème rendue semi-transparente :
+ *                                   'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)'
+ *   - une taille ou un nombre    : '12px', '1.035', '3'
+ * Une valeur vide ('') ou une ligne supprimée = valeur par défaut intégrée (les valeurs ci-dessous).
+ * Un réglage laissé vide peut alors être défini dans le CSS additionnel du site (:root { --morf-radius: 4px; }).
+ *
+ * Exemple pour un site Blocksy (décommentez et adaptez) :
+ *   'placeholder-bg' => 'var(--theme-palette-color-5)',
+ *   'focus'          => 'var(--theme-palette-color-1)',
+ *   'caption-bg'     => 'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)',
+ *   'caption-color'  => 'var(--theme-palette-color-7)',
+ */
+define('MORF_PIWIGO_STYLE', array(
+
+    // --- Disposition ---------------------------------------------------------
+    'columns'        => '3',                       // colonnes sur grand écran
+    'columns-tablet' => '2',                       // colonnes jusqu'à 900 px de large
+    'columns-mobile' => '1',                       // colonnes jusqu'à 550 px de large
+    'gap'            => '16px',                    // espace entre les photos
+    'radius'         => '12px',                    // arrondi des vignettes
+    'zoom'           => '1.035',                   // zoom au survol (1 = aucun)
+    'font'           => 'inherit',                 // police ('inherit' = celle du thème)
+
+    // --- Vignettes -----------------------------------------------------------
+    'placeholder-bg' => '#eee',                    // fond derrière la vignette pendant le chargement
+    'caption-bg'     => 'rgba(0, 0, 0, .45)',      // fond du titre affiché sur la vignette
+    'caption-color'  => '#fff',                    // couleur du texte de ce titre
+    'caption-size'   => '14px',                    // taille du texte de ce titre
+    'focus'          => 'currentColor',            // contour au focus clavier
+
+    // --- Visionneuse plein écran ----------------------------------------------
+    'lightbox-bg'    => 'rgba(12, 12, 12, .96)',   // fond (gardez-le sombre, voir le README)
+    'lightbox-color' => '#eee',                    // texte (titre)
+    'lightbox-muted' => '#888',                    // compteur « 3 / 13 »
+    'controls-color' => '#fff',                    // boutons fermer, précédent, suivant
+    'exif-color'     => '#ccc',                    // texte du badge EXIF
+    'exif-bg'        => 'rgba(255, 255, 255, .08)', // fond du badge EXIF
+    'exif-font'      => 'monospace, sans-serif',   // police du badge EXIF
+    'lightbox-z'     => '999999',                  // ordre d'empilement (baissez-le si elle masque votre menu)
+));
+
+/* ============================================================================
+ * FIN DES RÉGLAGES
+ * ========================================================================== */
+
+/**
+ * Transforme MORF_PIWIGO_STYLE en variables CSS --morf-* pour une galerie.
+ * :where() donne une spécificité nulle : un CSS de page (.page-id-123 .morf-piwigo-gallery { ... })
+ * garde toujours la priorité. Les valeurs vides ne produisent rien.
+ */
+function morf_piwigo_style_vars($gallery_id) {
+
+    $declarations = '';
+
+    foreach ((array) MORF_PIWIGO_STYLE as $name => $value) {
+
+        $name  = preg_replace('/[^a-z0-9-]/', '', strtolower((string) $name));
+        // Une valeur ne peut pas sortir de sa déclaration : ni accolade, ni point-virgule, ni balise.
+        $value = trim(preg_replace('/[<>{};]/', '', (string) $value));
+
+        if ($name === '' || $value === '') {
+            continue;
+        }
+
+        $declarations .= '--morf-' . $name . ': ' . $value . '; ';
+    }
+
+    if ($declarations === '') {
+        return '';
+    }
+
+    return ':where(#' . esc_attr($gallery_id) . ') { ' . $declarations . '}';
+}
 
 /**
  * Interrogation de l'API Piwigo avec cache.
@@ -388,29 +470,39 @@ function morf_piwigo_shortcode($atts) {
     </div>
 
     <style>
+    /*
+     * Variables --morf-* : valeurs issues de MORF_PIWIGO_STYLE (en haut du fichier).
+     * Le reste de la feuille de style les lit avec une valeur de repli intégrée.
+     */
+    <?php echo morf_piwigo_style_vars($gallery_id); ?>
+
     #<?php echo esc_attr($gallery_id); ?> {
-        --morf-gap: 16px;
-        --morf-radius: 12px;
         width: 100%;
         margin: 0 auto;
+        font-family: var(--morf-font, inherit);
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-gallery-grid {
-        columns: 3;
-        column-gap: var(--morf-gap);
+        columns: var(--morf-columns, 3);
+        column-gap: var(--morf-gap, 16px);
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-photo {
         position: relative;
         display: block;
         width: 100%;
-        margin: 0 0 var(--morf-gap);
+        margin: 0 0 var(--morf-gap, 16px);
         break-inside: avoid;
         overflow: hidden;
         cursor: zoom-in;
-        background: #eee;
-        border-radius: var(--morf-radius);
+        background: var(--morf-placeholder-bg, #eee);
+        border-radius: var(--morf-radius, 12px);
         -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+
+    #<?php echo esc_attr($gallery_id); ?> .morf-photo:focus-visible {
+        outline: 2px solid var(--morf-focus, currentColor);
+        outline-offset: 3px;
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-photo img {
@@ -422,7 +514,7 @@ function morf_piwigo_shortcode($atts) {
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-photo:hover img {
-        transform: scale(1.035);
+        transform: scale(var(--morf-zoom, 1.035));
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-photo-title {
@@ -431,20 +523,21 @@ function morf_piwigo_shortcode($atts) {
         left: 0;
         right: 0;
         padding: 19px 14px 10px;
-        color: #fff;
-        background: rgba(0, 0, 0, .45);
-        font-size: 14px;
+        color: var(--morf-caption-color, #fff);
+        background: var(--morf-caption-bg, rgba(0, 0, 0, .45));
+        font-size: var(--morf-caption-size, 14px);
         line-height: 1.3;
         font-weight: 400;
         clip-path: polygon(0 0, 100% 18%, 100% 100%, 0 100%);
-        border-bottom-left-radius: var(--morf-radius);
-        border-bottom-right-radius: var(--morf-radius);
+        border-bottom-left-radius: var(--morf-radius, 12px);
+        border-bottom-right-radius: var(--morf-radius, 12px);
         pointer-events: none;
         opacity: 0;
         transition: opacity .3s ease;
     }
 
-    #<?php echo esc_attr($gallery_id); ?> .morf-photo:hover .morf-photo-title {
+    #<?php echo esc_attr($gallery_id); ?> .morf-photo:hover .morf-photo-title,
+    #<?php echo esc_attr($gallery_id); ?> .morf-photo:focus-visible .morf-photo-title {
         opacity: 1;
     }
 
@@ -458,8 +551,8 @@ function morf_piwigo_shortcode($atts) {
         display: none;
         position: fixed;
         inset: 0;
-        z-index: 999999;
-        background: rgba(12, 12, 12, .96);
+        z-index: var(--morf-lightbox-z, 999999);
+        background: var(--morf-lightbox-bg, rgba(12, 12, 12, .96));
         align-items: center;
         justify-content: center;
         padding: 30px 60px 45px;
@@ -498,7 +591,7 @@ function morf_piwigo_shortcode($atts) {
         gap: 20px;
         width: 100%;
         max-width: 90vw;
-        color: #eee;
+        color: var(--morf-lightbox-color, #eee);
         font-size: 14px;
     }
 
@@ -516,10 +609,10 @@ function morf_piwigo_shortcode($atts) {
 
     #<?php echo esc_attr($gallery_id); ?> .morf-exif {
         display: inline-block;
-        font-family: monospace, sans-serif;
+        font-family: var(--morf-exif-font, monospace, sans-serif);
         font-size: 12px;
-        color: #ccc;
-        background: rgba(255, 255, 255, 0.08);
+        color: var(--morf-exif-color, #ccc);
+        background: var(--morf-exif-bg, rgba(255, 255, 255, 0.08));
         padding: 3px 8px;
         border-radius: 4px;
         width: fit-content;
@@ -529,14 +622,14 @@ function morf_piwigo_shortcode($atts) {
     #<?php echo esc_attr($gallery_id); ?> .morf-counter {
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
-        color: #888;
+        color: var(--morf-lightbox-muted, #888);
     }
 
     #<?php echo esc_attr($gallery_id); ?> .morf-lightbox button {
         position: absolute;
         border: 0;
         background: transparent;
-        color: white;
+        color: var(--morf-controls-color, #fff);
         cursor: pointer;
         padding: 10px;
         line-height: 1;
@@ -565,13 +658,13 @@ function morf_piwigo_shortcode($atts) {
 
     @media (max-width: 900px) {
         #<?php echo esc_attr($gallery_id); ?> .morf-gallery-grid {
-            columns: 2;
+            columns: var(--morf-columns-tablet, 2);
         }
     }
 
     @media (max-width: 550px) {
         #<?php echo esc_attr($gallery_id); ?> .morf-gallery-grid {
-            columns: 1;
+            columns: var(--morf-columns-mobile, 1);
         }
 
         #<?php echo esc_attr($gallery_id); ?> .morf-lightbox {

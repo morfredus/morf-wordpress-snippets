@@ -28,7 +28,7 @@ The button colour is set with a CSS variable. In your theme's additional CSS:
 
 Use it **either** way:
 
-- **As a plugin**: copy `morf-code-copy-button.php` into `wp-content/plugins/` and activate it.
+- **As a plugin**: put `morf-code-copy-button.php` in its own folder, `wp-content/plugins/morf-code-copy-button/morf-code-copy-button.php`, and activate it.
 - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
 
 ## License

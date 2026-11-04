@@ -19,7 +19,7 @@ It only acts on the `pre_ping` hook: nothing is deleted from the database, and e
 
 Use it **either** way:
 
-- **As a plugin**: copy `morf-no-self-pingbacks.php` into `wp-content/plugins/` and activate it.
+- **As a plugin**: put `morf-no-self-pingbacks.php` in its own folder, `wp-content/plugins/morf-no-self-pingbacks/morf-no-self-pingbacks.php`, and activate it.
 - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
 
 ## License

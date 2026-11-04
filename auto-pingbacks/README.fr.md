@@ -19,7 +19,7 @@ Il n'agit que sur le crochet `pre_ping` : rien n'est supprimé de la base de don
 
 Utilisez-le **au choix** :
 
-- **En extension** : copiez `morf-no-self-pingbacks.php` dans `wp-content/plugins/` et activez-la.
+- **En extension** : placez `morf-no-self-pingbacks.php` dans son propre dossier, `wp-content/plugins/morf-no-self-pingbacks/morf-no-self-pingbacks.php`, et activez-la.
 - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
 
 ## Licence

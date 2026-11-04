@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-04 - documentation
+
+- piwigo-gallery: new complete guide (`GUIDE.md`, `GUIDE.fr.md`): installation, shortcode, settings block, how to find a theme's colours and variables (console scripts tested on a Blocksy site), matching roles, dark mode, troubleshooting.
+- All snippets: plugin installation now uses a folder of its own (`wp-content/plugins/<name>/<name>.php`) instead of a loose file.
+
+## 2026-11-04 - piwigo-gallery 1.3.0
+
+- Settings block at the top of the file (`MORF_PIWIGO_STYLE`): every appearance variable listed with its default, as a colour code, a theme variable or a size. The API address sits in the same block.
+- An empty value or a deleted line keeps the built-in default, and can still be set from Additional CSS.
+- Values are sanitised (no braces, semicolons or angle brackets).
+
+## 2026-11-04 - piwigo-gallery 1.2.0
+
+- Theming: every colour, size and column count of the gallery is now a `--morf-*` CSS variable with a built-in default, so it can be matched to any WordPress theme from the Additional CSS. Documented in the README with theme mappings (Blocksy, Kadence, Astra, GeneratePress, block themes).
+- Keyboard focus outline on thumbnails (`--morf-focus`); the title is also shown on focus.
+- The `--morf-gap` and `--morf-radius` values are no longer set on the gallery element, so they can be overridden from outside.
+
 ## 2026-11-04 - piwigo-gallery 1.1.1
 
 - Fix: a recently created or renamed album was reported as "not found" for up to 10 minutes because the album list is cached. The list is now reloaded once from Piwigo before giving up.

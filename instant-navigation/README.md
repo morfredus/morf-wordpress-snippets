@@ -21,7 +21,7 @@ Near-instant page navigation (prefetch) and loading priority for the main image 
 
 Use it **either** way:
 
-- **As a plugin**: copy `morf-instant-navigation.php` into `wp-content/plugins/` and activate it.
+- **As a plugin**: put `morf-instant-navigation.php` in its own folder, `wp-content/plugins/morf-instant-navigation/morf-instant-navigation.php`, and activate it.
 - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
 
 ## License
