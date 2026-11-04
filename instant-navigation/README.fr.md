@@ -22,7 +22,15 @@ Navigation quasi instantanée (préchargement) et priorité de chargement de l'i
 Utilisez-le **au choix** :
 
 - **En extension** : placez `morf-instant-navigation.php` dans son propre dossier, `wp-content/plugins/morf-instant-navigation/morf-instant-navigation.php`, et activez-la.
-- **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
+- **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code. Code Snippets retire lui-même la balise d'ouverture `<?php` à l'enregistrement (il peut afficher un avertissement, sans conséquence).
+
+## Prérequis
+
+Aucun prérequis. La partie Speculation Rules fonctionne dans les navigateurs Chromium (Chrome, Edge, Opera) ; les autres utilisent le repli au survol et au toucher.
+
+## Désinstallation
+
+Désactivez ou supprimez le snippet ou l'extension. Rien n'est stocké en base.
 
 ## Licence
 

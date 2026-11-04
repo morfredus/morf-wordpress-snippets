@@ -10,7 +10,7 @@ Display a [Piwigo](https://piwigo.org) album inside a WordPress page with one sh
 
 Piwigo keeps managing the photographs and their albums. WordPress stays the place where you tell the story behind them. The gallery is generated on the fly from the Piwigo API.
 
-Written for [morfredus.fr](https://morfredus.fr), shared as is. The story behind it: *Intégrer une galerie Piwigo dans WordPress sans quitter mon carnet* (French).
+Written for [morfredus.fr](https://morfredus.fr), shared as is. The story behind it: [*Intégrer une galerie Piwigo dans WordPress sans quitter mon carnet*](https://morfredus.fr/integrer-piwigo-wordpress/) (in French).
 
 ## Features
 
@@ -36,7 +36,7 @@ Written for [morfredus.fr](https://morfredus.fr), shared as is. The story behind
 
 2. Use it **either** way:
    - **As a plugin**: put `morf-piwigo-gallery.php` in its own folder, `wp-content/plugins/morf-piwigo-gallery/morf-piwigo-gallery.php`, and activate it.
-   - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+   - **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
 
 ## Usage
 
@@ -58,7 +58,8 @@ In the block editor, put the shortcode in a *Shortcode* block. To show it as tex
 
 1. The shortcode looks up the album by name with `pwg.categories.getList`, then lists its images with `pwg.categories.getImages`.
 2. The Piwigo API response does not contain the shooting data. The code therefore requests the first 64 KB of each image (HTTP `Range`) and reads the EXIF header with PHP's `exif_read_data`.
-3. Results are cached with WordPress transients.
+3. **Camera model fallback.** If the EXIF data contains no camera make or model, the model is read from the **file name** when it follows the pattern `anything_MODEL_number.ext`. For example `20240512_OM20_001.jpg` shows `OM20`. Everything between the first underscore and the last `_number` is used, and it is displayed even when it is not a camera name: `photo_2024_001.jpg` shows `2024`, and `a_b_c_d_042.webp` shows `b_c_d`. A name without that pattern (`IMG_1234.JPG`, `OM20_007.jpg`) shows nothing. It is on by default. To turn it off, set `MORF_PIWIGO_CAMERA_FROM_FILENAME` to `false` in the settings block at the top of the file: then only the EXIF data is used. Otherwise, name your files to match the pattern, or make sure they carry their EXIF camera model.
+4. Results are cached with WordPress transients.
 
 ## Adapting the look to your theme
 
@@ -115,59 +116,7 @@ Values are checked before use: braces, semicolons and angle brackets are strippe
 
 Not configurable with variables: the 900 px and 550 px breakpoints (CSS media queries cannot read variables). Edit the two `@media` lines in the PHP file if you need other values.
 
-### Use your theme's colours
-
-Most themes publish their palette as CSS variables on `:root`. Use them with `var(...)`:
-
-| Theme | Variables to look for |
-| --- | --- |
-| Blocksy | `--theme-palette-color-1` to `-8` (checked on the author's site) |
-| Kadence | `--global-palette1` to `9` |
-| Astra | `--ast-global-color-0` to `8` |
-| GeneratePress | `--contrast`, `--contrast-2`, `--contrast-3`, `--base`, `--base-2`, `--base-3`, `--accent` |
-| Block themes (theme.json) | `--wp--preset--color--<slug>`, slugs are listed in the Site Editor under Styles > Colors |
-
-Only Blocksy was checked on a real site. For the others, confirm the names in your browser: open the developer tools, select the `<html>` element and look at the *Styles* panel, or run this in the console:
-
-```js
-[...getComputedStyle(document.documentElement)].filter(k => /palette|global-color|preset--color/.test(k))
-```
-
-**Pitfall.** On a Blocksy site that also runs Kadence Blocks, the `--global-palette*` variables exist too, with Kadence's default **blue** colours, not your theme's. Use the variables of the theme that actually styles your pages.
-
-### Example (Blocksy)
-
-In the settings block:
-
-```php
-'placeholder-bg' => 'var(--theme-palette-color-5)',
-'focus'          => 'var(--theme-palette-color-1)',
-// Title over the photo: theme text colour on theme background colour, 55 % opaque.
-'caption-bg'     => 'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)',
-'caption-color'  => 'var(--theme-palette-color-7)',
-```
-
-Or, as Additional CSS:
-
-```css
-:root {
-  --morf-placeholder-bg: var(--theme-palette-color-5);
-  --morf-focus: var(--theme-palette-color-1);
-  /* Title over the photo: theme text colour on theme background colour, 55 % opaque. */
-  --morf-caption-bg: color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent);
-  --morf-caption-color: var(--theme-palette-color-7);
-}
-```
-
-`color-mix()` is needed to make a theme colour semi-transparent. It works in current Chrome, Edge, Safari and Firefox (2023 and later); in an older browser the declaration is ignored and the default is used.
-
-### Good to know
-
-- **Keep the viewer dark.** The full-screen viewer is meant to show photographs on a dark background. If your theme has a dark mode, its palette usually swaps light and dark colours, so a theme colour used for `--morf-lightbox-bg` would turn the viewer white in dark mode. Only use theme colours there if your site has no dark mode.
-- **Dark mode on the title.** The pair "text colour on background colour" (for example Blocksy `-3` on `-7`) swaps together, so the title stays readable in both modes.
-- **One page only.** WordPress adds the page id to the `<body>` class, so you can scope a setting: `.page-id-123 .morf-piwigo-gallery { --morf-radius: 0; }`.
-- **Order of rules.** Variables are read at display time: for the CSS option, set them anywhere (`:root`, `body`, or a wrapper), no need to load them before the gallery.
-- **Caching plugins.** If you use a CSS minifier or cache, clear it after changing your Additional CSS.
+For the theme colours (how to find your theme's variables, which variable for which role, dark mode, an example for Blocksy), see the **[complete guide](GUIDE.md#5-finding-your-themes-colours-and-variables)**.
 
 ## Privacy and security notes
 
@@ -181,6 +130,10 @@ Or, as Additional CSS:
 - EXIF display depends on the metadata being present in the file.
 - After a change in Piwigo, cached data is not refreshed immediately. Wait for the cache to expire, or delete the `morf_piwigo_*` and `morf_strict_exif_*` transients.
 - Tested on the author's own site only.
+
+## Uninstalling
+
+Deactivate or delete the snippet or plugin. The cached data (`morf_piwigo_*` and `morf_strict_exif_*` transients) expires by itself after 10 minutes and 30 days; a transient-cleaning plugin can remove it sooner. Shortcodes left in your pages are then displayed as plain text.
 
 ## License
 

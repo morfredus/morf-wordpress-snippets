@@ -3,7 +3,7 @@
  * Plugin Name: morf Piwigo Gallery
  * Plugin URI:  https://github.com/morfredus/morf-wordpress-snippets/tree/main/piwigo-gallery
  * Description: Shortcode [morf_piwigo] : affiche un album Piwigo (public) dans WordPress, avec visionneuse et EXIF, sans copier les images.
- * Version:     1.3.0
+ * Version:     1.4.0
  * Author:      morfredus
  * Author URI:  https://morfredus.fr
  * License:     GPL-3.0-only
@@ -11,7 +11,7 @@
  * Text Domain: morf-piwigo-gallery
  *
  * Utilisable comme extension (dans son propre dossier : wp-content/plugins/<nom>/<nom>.php) ou comme snippet
- * (Code Snippets : coller le code sans la première ligne <?php).
+ * (Code Snippets : coller le code ; il retire lui-même la balise d'ouverture <?php à l'enregistrement).
  *
  * Ne lit que les albums publics de Piwigo. Les EXIF sont lus dans les fichiers servis
  * par Piwigo : si vos originaux contiennent des coordonnées GPS, elles restent
@@ -37,6 +37,12 @@ if (!defined('ABSPATH')) {
 
 // Adresse de l'API de VOTRE Piwigo (ws.php à la racine de l'installation).
 define('MORF_PIWIGO_API', 'https://votre-piwigo.exemple/ws.php');
+
+// Modèle d'appareil lu dans le NOM DU FICHIER quand l'EXIF n'en contient pas.
+// Motif « texte_MODELE_numéro.ext » : 20240512_OM20_001.jpg affiche « OM20 ».
+// Attention : tout ce qui est entre le premier « _ » et le dernier « _numéro » est pris
+// (photo_2024_001.jpg affiche « 2024 »). true = activé (par défaut), false = désactivé.
+define('MORF_PIWIGO_CAMERA_FROM_FILENAME', true);
 
 /*
  * Apparence de la galerie. Une ligne = un réglage. La valeur peut être :
@@ -137,7 +143,6 @@ function morf_piwigo_api($params, $cache_time = 600, $force = false) {
     $response = wp_remote_get($url, array(
         'timeout'     => 20,
         'redirection' => 3,
-        'sslverify'   => true,
         'headers'     => array(
             'Accept' => 'application/json',
         ),
@@ -199,12 +204,10 @@ function morf_piwigo_get_albums($force = false) {
 function morf_piwigo_get_images($album_id, $limit) {
 
     $response = morf_piwigo_api(array(
-        'method'      => 'pwg.categories.getImages',
-        'cat_id'      => intval($album_id),
-        'id'          => intval($album_id),
-        'recursive'   => 'false',
-        'f_recursive' => 'false',
-        'per_page'    => ($limit > 0) ? $limit : 500,
+        'method'    => 'pwg.categories.getImages',
+        'cat_id'    => intval($album_id),   // seul 'cat_id' est lu par Piwigo : un simple 'id' renverrait les photos de tous les albums
+        'recursive' => 'false',
+        'per_page'  => ($limit > 0) ? $limit : 500,
     ));
 
     if (is_wp_error($response)) {
@@ -223,13 +226,23 @@ function morf_piwigo_get_images($album_id, $limit) {
 /**
  * Extraction stricte et fiable des 5 paramètres EXIF :
  * Modèle • Focale • Ouverture • Durée d'exposition • ISO
+ *
+ * Repli pour le modèle (réglage MORF_PIWIGO_CAMERA_FROM_FILENAME) : si l'EXIF ne contient ni marque ni modèle,
+ * il est lu dans le NOM DU FICHIER quand celui-ci suit le motif « texte_MODELE_numéro.ext » (ex. 20240512_OM20_001.jpg donne « OM20 »).
+ * Tout ce qui se trouve entre le premier « _ » et le dernier « _numéro.ext » est pris, même si ce n'est
+ * pas un appareil (photo_2024_001.jpg donne « 2024 »). Voir le README, section « How it works ».
  */
 function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
     if (empty($image_url)) {
         return '';
     }
 
-    $cache_key = 'morf_strict_exif_' . md5($image_url);
+    // Réglage absent (ligne supprimée) = activé, comme par défaut.
+    $camera_from_file = !defined('MORF_PIWIGO_CAMERA_FROM_FILENAME') || (bool) MORF_PIWIGO_CAMERA_FROM_FILENAME;
+
+    // La clé ne change que si le repli est désactivé : le cache existant reste valable en mode par défaut,
+    // et basculer le réglage ne laisse pas d'anciens résultats en cache pendant 30 jours.
+    $cache_key = 'morf_strict_exif_' . md5($image_url) . ($camera_from_file ? '' : '_nofile');
     $cached = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
@@ -295,7 +308,7 @@ function morf_piwigo_get_strict_exif($image_url, $file_name = '') {
         }
     }
 
-    if (empty($camera) && !empty($file_name)) {
+    if ($camera_from_file && empty($camera) && !empty($file_name)) {
         if (preg_match('/_(.+?)_\d+\.[a-zA-Z0-9]+$/', $file_name, $matches)) {
             $camera = trim($matches[1]);
         }

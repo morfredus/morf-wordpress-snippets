@@ -35,7 +35,7 @@ Le fichier `morf-piwigo-gallery.php` s'utilise de deux façons. Choisissez-en un
 
 1. Installez et activez [Code Snippets](https://wordpress.org/plugins/code-snippets/).
 2. **Snippets > Ajouter**, donnez-lui un nom comme « Galerie Piwigo », type **PHP**.
-3. Collez le contenu de `morf-piwigo-gallery.php` **sans sa première ligne** `<?php`.
+3. Collez le contenu de `morf-piwigo-gallery.php`. Vous pouvez garder la première ligne `<?php` : Code Snippets la retire à l'enregistrement (il peut afficher un avertissement, sans conséquence).
 4. Modifiez le bloc de réglages (section 4) : au minimum `MORF_PIWIGO_API`.
 5. Choisissez une portée qui s'exécute sur le site public (le réglage par défaut « exécuter partout » convient), puis enregistrez et activez.
 
@@ -66,6 +66,8 @@ Vos réglages vivent dans ce fichier : si vous le remplacez plus tard par une ve
 
 **Sous-albums.** Seules les photographies de l'album lui-même sont affichées, pas celles de ses sous-albums. Utilisez un shortcode par album.
 
+**Modèle d'appareil.** Le modèle affiché dans la visionneuse vient des données EXIF de l'image. S'il n'y en a pas, le code se rabat sur le **nom du fichier** : avec un nom comme `20240512_OM20_001.jpg` (`texte_MODELE_numéro.ext`), il affiche `OM20`. Tout ce qui se trouve entre le premier tiret bas et le dernier `_numéro` est pris, donc `photo_2024_001.jpg` affiche `2024`, qui n'est pas un appareil. Un nom sans ce motif n'affiche rien. Pour maîtriser cela, mettez `MORF_PIWIGO_CAMERA_FROM_FILENAME` à `false` dans le bloc de réglages (seules les données EXIF sont alors utilisées), ou nommez vos fichiers d'après le motif, ou gardez le modèle d'appareil dans les données EXIF.
+
 **Performances.**
 - Les réponses de Piwigo sont conservées 10 minutes.
 - Les données de prise de vue sont lues dans les fichiers image eux-mêmes, une requête par photographie, avec un délai maximal de 5 secondes. Le premier affichage d'une page avec beaucoup de photographies peut donc être lent. Le résultat est conservé 30 jours : seul le premier visiteur en pâtit. Après avoir publié une page, ouvrez-la une fois vous-même pour préparer le cache.
@@ -77,6 +79,7 @@ En haut du fichier PHP, vous trouverez :
 
 ```php
 define('MORF_PIWIGO_API', 'https://votre-piwigo.exemple/ws.php');
+define('MORF_PIWIGO_CAMERA_FROM_FILENAME', true);   // true ou false
 
 define('MORF_PIWIGO_STYLE', array(
     'columns'        => '3',
@@ -192,6 +195,27 @@ Décidez pour chaque réglage quel **rôle** il joue dans votre thème, puis cho
 | `radius`, `gap` | Le rythme de votre thème (arrondi des cartes, espacements) | `12px`, `16px` |
 | `font` | Laissez `inherit` : la galerie utilise la police du thème | |
 
+**Exemple complet (Blocksy), dans le bloc de réglages :**
+
+```php
+'placeholder-bg' => 'var(--theme-palette-color-5)',
+'focus'          => 'var(--theme-palette-color-1)',
+// Titre sur la photo : couleur de texte du thème sur couleur de fond du thème, opaque à 55 %.
+'caption-bg'     => 'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)',
+'caption-color'  => 'var(--theme-palette-color-7)',
+```
+
+Ou, en CSS additionnel (laissez vides les lignes correspondantes du bloc de réglages) :
+
+```css
+:root {
+  --morf-placeholder-bg: var(--theme-palette-color-5);
+  --morf-focus: var(--theme-palette-color-1);
+  --morf-caption-bg: color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent);
+  --morf-caption-color: var(--theme-palette-color-7);
+}
+```
+
 Comment trouver les rôles : la mesure du 5.1 vous donne les couleurs du texte, du fond et des liens ; comparez-les au tableau du 5.2 pour trouver quelle variable numérotée contient chacune. Sur le site de l'auteur, la mesure a donné `#2F2F2F` (texte), `#FAF8F4` (fond) et `#5E4B3C` (liens), soit `-3`, `-7` et `-1`.
 
 **Pourquoi un couple texte sur fond pour la légende.** Le titre affiché sur une photographie doit rester lisible quelle que soit la photographie. Un bandeau semi-transparent de la couleur du texte, avec la couleur de fond de la page pour les lettres, garde un fort contraste.
@@ -224,12 +248,14 @@ Si votre mode sombre ajoute une classe sur `<html>` (par exemple `.dark` ou `.mf
 | « Erreur Piwigo : … » | L'adresse de l'API est fausse ou injoignable. Ouvrez-la dans un navigateur (section 1). Vérifiez que votre hébergeur autorise les requêtes sortantes. |
 | Des photographies d'un autre album apparaissent | Votre version est antérieure à la 1.1.0. Mettez à jour. |
 | Pas de données de prise de vue sous la photographie | Le fichier image n'a pas de données EXIF (Piwigo ou votre export les a peut-être retirées), ou le serveur d'images ne permet pas de les lire. Ouvrez le fichier en taille réelle et vérifiez ses métadonnées. |
+| Un mauvais modèle d'appareil s'affiche (une année, un mot) | Les données EXIF n'ont pas de modèle, le code l'a donc lu dans le nom du fichier (voir section 3). Mettez `MORF_PIWIGO_CAMERA_FROM_FILENAME` à `false`, ajoutez le modèle aux données EXIF, ou renommez le fichier pour que la partie entre le premier tiret bas et le dernier `_numéro` soit celle voulue. |
 | Le premier affichage de la page est très lent | Les données de prise de vue de chaque photographie sont lues une fois, puis conservées 30 jours. Ouvrez la page une fois pour préparer le cache. |
 | Un réglage n'a aucun effet | Vérifiez la syntaxe (une apostrophe et une virgule en fin de ligne). Vérifiez que la valeur est une valeur CSS valide. Si vous l'avez mise dans le CSS additionnel, sa ligne dans le bloc de réglages doit être vide ou supprimée. Videz votre extension de cache. Pour voir ce que la page utilise, cherchez `--morf-` dans le code source de la page. |
 | Les couleurs sont bleues et ne correspondent pas au thème | Vous avez utilisé les variables Kadence (`--global-palette*`) sur un site qui n'utilise pas le thème Kadence. Voir le piège du 5.2. |
 | La visionneuse passe derrière votre menu | Baissez `lightbox-z`, ou augmentez le `z-index` de votre menu. |
 | La visionneuse est blanche en mode sombre | Vous avez utilisé une couleur du thème pour `lightbox-bg`. Voir la section 7. |
 | La modification n'apparaît pas après avoir changé un snippet | Videz le cache de votre extension de cache et de votre navigateur. |
+| Avertissement sur `<?php` à l'enregistrement | Sans conséquence : Code Snippets retire lui-même la balise d'ouverture. |
 | Écran blanc après l'enregistrement du snippet | Une erreur de syntaxe. Code Snippets désactive le snippet et affiche l'erreur ; avec l'option extension, restaurez le fichier. Comparez avec l'original. |
 
 ## Licence

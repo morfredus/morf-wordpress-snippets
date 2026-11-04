@@ -35,7 +35,7 @@ The file `morf-piwigo-gallery.php` can be used in two ways. Pick one.
 
 1. Install and activate [Code Snippets](https://wordpress.org/plugins/code-snippets/).
 2. **Snippets > Add New**, give it a name such as "Piwigo gallery", type **PHP**.
-3. Paste the content of `morf-piwigo-gallery.php` **without its first line** `<?php`.
+3. Paste the content of `morf-piwigo-gallery.php`. You can keep the first line `<?php`: Code Snippets removes it when you save (it may show a warning, which you can ignore).
 4. Edit the settings block (section 4): at least `MORF_PIWIGO_API`.
 5. Choose a scope that runs on the front end of the site (the default "run everywhere" is fine), then save and activate.
 
@@ -66,6 +66,8 @@ Note that your settings live in this file: if you later replace it with a newer 
 
 **Subalbums.** Only the photographs of the album itself are shown, not those of its subalbums. Use one shortcode per album.
 
+**Camera model.** The model shown in the viewer comes from the EXIF data of the image. If it has none, the code falls back on the **file name**: with a name like `20240512_OM20_001.jpg` (`anything_MODEL_number.ext`), it shows `OM20`. Everything between the first underscore and the last `_number` is taken, so `photo_2024_001.jpg` shows `2024`, which is not a camera. A name without that pattern shows nothing. To control it, set `MORF_PIWIGO_CAMERA_FROM_FILENAME` to `false` in the settings block (only the EXIF data is then used), or name your files after the pattern, or keep the camera model in the EXIF data.
+
 **Performance.**
 - The Piwigo answers are cached for 10 minutes.
 - The shooting data are read from the image files themselves, one request per photograph, with a 5-second timeout. The first display of a page with many photographs can therefore be slow. The result is cached for 30 days, so only the first visitor pays. After publishing a page, open it once yourself to warm the cache.
@@ -77,6 +79,7 @@ At the top of the PHP file, you will find:
 
 ```php
 define('MORF_PIWIGO_API', 'https://your-piwigo.example/ws.php');
+define('MORF_PIWIGO_CAMERA_FROM_FILENAME', true);   // true or false
 
 define('MORF_PIWIGO_STYLE', array(
     'columns'        => '3',
@@ -192,6 +195,27 @@ Decide for each setting which **role** in your theme it plays, then pick the var
 | `radius`, `gap` | The rhythm of your theme (its card radius, its spacing) | `12px`, `16px` |
 | `font` | Leave at `inherit`: the gallery uses the font of the theme | |
 
+**Complete example (Blocksy), in the settings block:**
+
+```php
+'placeholder-bg' => 'var(--theme-palette-color-5)',
+'focus'          => 'var(--theme-palette-color-1)',
+// Title over the photo: theme text colour on theme background colour, 55 % opaque.
+'caption-bg'     => 'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)',
+'caption-color'  => 'var(--theme-palette-color-7)',
+```
+
+Or, as Additional CSS (leave the matching lines of the settings block empty):
+
+```css
+:root {
+  --morf-placeholder-bg: var(--theme-palette-color-5);
+  --morf-focus: var(--theme-palette-color-1);
+  --morf-caption-bg: color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent);
+  --morf-caption-color: var(--theme-palette-color-7);
+}
+```
+
 How to find the roles: the measure in 5.1 gives you the text, background and link colours; compare them with the table of 5.2 to find which numbered variable holds each one. On the author's site, the measure gave `#2F2F2F` (text), `#FAF8F4` (background) and `#5E4B3C` (links), which are `-3`, `-7` and `-1`.
 
 **Why a text-on-background pair for the caption.** The title shown over a photograph needs to be readable whatever the photograph is. A semi-transparent band of the text colour, with the page background colour for the lettering, keeps a strong contrast.
@@ -224,12 +248,14 @@ If your dark mode adds a class on `<html>` (for example `.dark` or `.mf-dark-mod
 | "Erreur Piwigo : …" | The API address is wrong or unreachable. Open it in a browser (section 1). Check that your host can make outgoing requests. |
 | Photographs from another album appear | You are using a version older than 1.1.0. Update. |
 | No shooting data under the photograph | The image file has no EXIF data (Piwigo or your export may have removed it), or the image server does not allow reading it. Open the full-size file and check its metadata. |
+| A wrong camera model appears (a year, a word) | The EXIF data has no camera model, so the code read it from the file name (see section 3). Set `MORF_PIWIGO_CAMERA_FROM_FILENAME` to `false`, add the model to the EXIF data, or rename the file so the part between the first underscore and the last `_number` is what you want. |
 | First display of the page is very slow | The shooting data of each photograph are read once, then cached for 30 days. Open the page once to warm the cache. |
 | A setting has no effect | Check the syntax (a quote and a comma at the end of each line). Check that the value is a valid CSS value. If you set it in Additional CSS, its line in the settings block must be empty or deleted. Clear your cache plugin. To see what the page uses, search the page source for `--morf-`. |
 | Colours are blue and do not match the theme | You used the Kadence variables (`--global-palette*`) on a site that does not use the Kadence theme. See the trap in 5.2. |
 | The viewer is hidden behind your menu | Lower `lightbox-z`, or raise your menu's `z-index`. |
 | The viewer is white in dark mode | You used a theme colour for `lightbox-bg`. See section 7. |
 | The change is not visible after editing a snippet | Clear the cache of your caching plugin and of your browser. |
+| Warning about `<?php` when saving | Harmless: Code Snippets removes the opening tag itself. |
 | White screen after saving the snippet | A syntax error. Code Snippets deactivates the snippet and shows the error; with the plugin option, restore the file. Compare with the original. |
 
 ## Licence

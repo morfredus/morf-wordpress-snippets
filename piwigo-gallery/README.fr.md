@@ -10,7 +10,7 @@ Affichez un album [Piwigo](https://piwigo.org) dans une page WordPress avec un s
 
 Piwigo continue de gérer les photographies et leurs albums. WordPress reste l'endroit où l'on raconte ce qu'il y a derrière. La galerie est générée à la volée à partir de l'API de Piwigo.
 
-Écrit pour [morfredus.fr](https://morfredus.fr), partagé tel quel. L'histoire derrière : *Intégrer une galerie Piwigo dans WordPress sans quitter mon carnet*.
+Écrit pour [morfredus.fr](https://morfredus.fr), partagé tel quel. L'histoire derrière : [*Intégrer une galerie Piwigo dans WordPress sans quitter mon carnet*](https://morfredus.fr/integrer-piwigo-wordpress/).
 
 ## Fonctionnalités
 
@@ -36,7 +36,7 @@ Piwigo continue de gérer les photographies et leurs albums. WordPress reste l'e
 
 2. Utilisez-le **au choix** :
    - **En extension** : placez `morf-piwigo-gallery.php` dans son propre dossier, `wp-content/plugins/morf-piwigo-gallery/morf-piwigo-gallery.php`, et activez-la.
-   - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
+   - **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code. Code Snippets retire lui-même la balise d'ouverture `<?php` à l'enregistrement (il peut afficher un avertissement, sans conséquence).
 
 ## Utilisation
 
@@ -58,7 +58,8 @@ Dans l'éditeur de blocs, placez le shortcode dans un bloc *Shortcode*. Pour l'a
 
 1. Le shortcode cherche l'album par son nom avec `pwg.categories.getList`, puis liste ses images avec `pwg.categories.getImages`.
 2. Les réponses de l'API Piwigo ne contiennent pas les données de prise de vue. Le code demande donc les 64 premiers Ko de chaque image (en-tête HTTP `Range`) et lit l'en-tête EXIF avec `exif_read_data`.
-3. Les résultats sont conservés avec les transients de WordPress.
+3. **Repli pour le modèle d'appareil.** Si les données EXIF ne contiennent ni marque ni modèle, le modèle est lu dans le **nom du fichier** quand il suit le motif `texte_MODELE_numéro.ext`. Par exemple `20240512_OM20_001.jpg` affiche `OM20`. Tout ce qui se trouve entre le premier tiret bas et le dernier `_numéro` est pris, et il est affiché même si ce n'est pas un nom d'appareil : `photo_2024_001.jpg` affiche `2024`, et `a_b_c_d_042.webp` affiche `b_c_d`. Un nom qui ne suit pas ce motif (`IMG_1234.JPG`, `OM20_007.jpg`) n'affiche rien. Il est activé par défaut. Pour le désactiver, mettez `MORF_PIWIGO_CAMERA_FROM_FILENAME` à `false` dans le bloc de réglages en tête du fichier : seules les données EXIF sont alors utilisées. Sinon, nommez vos fichiers d'après le motif, ou assurez-vous qu'ils portent leur modèle EXIF.
+4. Les résultats sont conservés avec les transients de WordPress.
 
 ## Adapter le rendu au thème du site
 
@@ -115,59 +116,7 @@ Les valeurs sont contrôlées avant usage : accolades, points-virgules et chevro
 
 Non réglables par variable : les seuils de 900 px et 550 px (les media queries CSS ne lisent pas les variables). Modifiez les deux lignes `@media` dans le fichier PHP si vous voulez d'autres valeurs.
 
-### Utiliser les couleurs de votre thème
-
-La plupart des thèmes publient leur palette sous forme de variables CSS sur `:root`. Utilisez-les avec `var(...)` :
-
-| Thème | Variables à chercher |
-| --- | --- |
-| Blocksy | `--theme-palette-color-1` à `-8` (vérifié sur le site de l'auteur) |
-| Kadence | `--global-palette1` à `9` |
-| Astra | `--ast-global-color-0` à `8` |
-| GeneratePress | `--contrast`, `--contrast-2`, `--contrast-3`, `--base`, `--base-2`, `--base-3`, `--accent` |
-| Thèmes à blocs (theme.json) | `--wp--preset--color--<slug>`, les slugs sont listés dans l'éditeur de site, section Styles > Couleurs |
-
-Seul Blocksy a été vérifié sur un vrai site. Pour les autres, confirmez les noms dans votre navigateur : ouvrez les outils de développement, sélectionnez l'élément `<html>` et regardez le panneau *Styles*, ou lancez ceci dans la console :
-
-```js
-[...getComputedStyle(document.documentElement)].filter(k => /palette|global-color|preset--color/.test(k))
-```
-
-**Piège.** Sur un site Blocksy qui utilise aussi Kadence Blocks, les variables `--global-palette*` existent également, avec les couleurs **bleues** par défaut de Kadence, et non celles de votre thème. Utilisez les variables du thème qui habille réellement vos pages.
-
-### Exemple (Blocksy)
-
-Dans le bloc de réglages :
-
-```php
-'placeholder-bg' => 'var(--theme-palette-color-5)',
-'focus'          => 'var(--theme-palette-color-1)',
-// Titre sur la photo : couleur de texte du thème sur couleur de fond du thème, opaque à 55 %.
-'caption-bg'     => 'color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent)',
-'caption-color'  => 'var(--theme-palette-color-7)',
-```
-
-Ou, en CSS additionnel :
-
-```css
-:root {
-  --morf-placeholder-bg: var(--theme-palette-color-5);
-  --morf-focus: var(--theme-palette-color-1);
-  /* Titre sur la photo : couleur de texte du thème sur couleur de fond du thème, opaque à 55 %. */
-  --morf-caption-bg: color-mix(in srgb, var(--theme-palette-color-3) 55%, transparent);
-  --morf-caption-color: var(--theme-palette-color-7);
-}
-```
-
-`color-mix()` est nécessaire pour rendre une couleur du thème semi-transparente. Il fonctionne dans les versions actuelles de Chrome, Edge, Safari et Firefox (2023 et après) ; dans un navigateur plus ancien, la déclaration est ignorée et la valeur par défaut s'applique.
-
-### Bon à savoir
-
-- **Gardez la visionneuse sombre.** La visionneuse plein écran est faite pour montrer des photographies sur fond sombre. Si votre thème a un mode sombre, sa palette échange en général clairs et sombres : une couleur du thème utilisée pour `--morf-lightbox-bg` rendrait la visionneuse blanche en mode sombre. N'y mettez une couleur du thème que si votre site n'a pas de mode sombre.
-- **Mode sombre et titre.** Le couple « couleur de texte sur couleur de fond » (par exemple Blocksy `-3` sur `-7`) s'échange en bloc : le titre reste lisible dans les deux modes.
-- **Une seule page.** WordPress ajoute l'identifiant de la page à la classe du `<body>` : vous pouvez limiter un réglage, par exemple `.page-id-123 .morf-piwigo-gallery { --morf-radius: 0; }`.
-- **Ordre des règles.** Les variables sont lues à l'affichage : pour l'option CSS, placez-les où vous voulez (`:root`, `body`, ou un conteneur), sans souci d'ordre avec la galerie.
-- **Extensions de cache.** Si vous utilisez un minificateur ou un cache de CSS, videz-le après avoir modifié votre CSS additionnel.
+Pour les couleurs du thème (comment retrouver les variables de votre thème, quelle variable pour quel rôle, mode sombre, un exemple pour Blocksy), voyez le **[guide complet](GUIDE.fr.md#5-retrouver-les-couleurs-et-les-variables-de-votre-thème)**.
 
 ## Vie privée et sécurité
 
@@ -181,6 +130,10 @@ Ou, en CSS additionnel :
 - L'affichage des EXIF dépend de la présence des métadonnées dans le fichier.
 - Après une modification dans Piwigo, les données en cache ne sont pas rafraîchies tout de suite. Attendez l'expiration du cache ou supprimez les transients `morf_piwigo_*` et `morf_strict_exif_*`.
 - Testé uniquement sur le site de l'auteur.
+
+## Désinstallation
+
+Désactivez ou supprimez le snippet ou l'extension. Les données en cache (transients `morf_piwigo_*` et `morf_strict_exif_*`) expirent d'elles-mêmes après 10 minutes et 30 jours ; une extension de nettoyage des transients peut les retirer plus tôt. Les shortcodes restés dans vos pages s'affichent alors comme du texte brut.
 
 ## Licence
 

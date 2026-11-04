@@ -29,7 +29,15 @@ Each block is independent: delete the ones you do not want.
 Use it **either** way:
 
 - **As a plugin**: put `morf-wordpress-cleanup.php` in its own folder, `wp-content/plugins/morf-wordpress-cleanup/morf-wordpress-cleanup.php`, and activate it.
-- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
+
+## Requirements
+
+No requirement.
+
+## Uninstalling
+
+Deactivate or delete the snippet or plugin. Nothing is stored in the database: the links and headers that were removed come back.
 
 ## License
 

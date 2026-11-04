@@ -29,7 +29,15 @@ The button colour is set with a CSS variable. In your theme's additional CSS:
 Use it **either** way:
 
 - **As a plugin**: put `morf-code-copy-button.php` in its own folder, `wp-content/plugins/morf-code-copy-button/morf-code-copy-button.php`, and activate it.
-- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
+
+## Requirements
+
+A site served over HTTPS (the clipboard API requires it).
+
+## Uninstalling
+
+Deactivate or delete the snippet or plugin. Nothing is stored in the database.
 
 ## License
 

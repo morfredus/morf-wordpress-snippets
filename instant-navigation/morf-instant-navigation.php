@@ -10,7 +10,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Utilisable comme extension (dans son propre dossier : wp-content/plugins/<nom>/<nom>.php) ou comme snippet
- * (Code Snippets : coller le code sans la première ligne <?php).
+ * (Code Snippets : coller le code ; il retire lui-même la balise d'ouverture <?php à l'enregistrement).
  *
  * 1. Les images de l'article affichées en grande taille sont chargées en priorité (LCP).
  * 2. Les pages internes sont préchargées quand le visiteur s'apprête à cliquer

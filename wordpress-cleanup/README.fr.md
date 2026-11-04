@@ -29,7 +29,15 @@ Chaque bloc est indépendant : supprimez ceux dont vous n'avez pas besoin.
 Utilisez-le **au choix** :
 
 - **En extension** : placez `morf-wordpress-cleanup.php` dans son propre dossier, `wp-content/plugins/morf-wordpress-cleanup/morf-wordpress-cleanup.php`, et activez-la.
-- **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code sans la première ligne `<?php`.
+- **En snippet** (avec [Code Snippets](https://wordpress.org/plugins/code-snippets/) par exemple) : collez le code. Code Snippets retire lui-même la balise d'ouverture `<?php` à l'enregistrement (il peut afficher un avertissement, sans conséquence).
+
+## Prérequis
+
+Aucun prérequis.
+
+## Désinstallation
+
+Désactivez ou supprimez le snippet ou l'extension. Rien n'est stocké en base : les liens et en-têtes retirés reviennent.
 
 ## Licence
 

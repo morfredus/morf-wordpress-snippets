@@ -33,7 +33,15 @@ add_filter( 'morf_webp_delete_original', '__return_true' );
 Use it **either** way:
 
 - **As a plugin**: put `morf-webp-conversion.php` in its own folder, `wp-content/plugins/morf-webp-conversion/morf-webp-conversion.php`, and activate it.
-- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
+
+## Requirements
+
+A server whose image library (GD or Imagick) can write WebP. The snippet checks this and does nothing otherwise.
+
+## Uninstalling
+
+Deactivating stops new conversions. **Images already converted stay in WebP**: they are not converted back, and the originals are gone if you had enabled their deletion.
 
 ## License
 

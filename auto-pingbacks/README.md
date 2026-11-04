@@ -20,7 +20,15 @@ It only acts on the `pre_ping` hook: nothing is deleted from the database, and e
 Use it **either** way:
 
 - **As a plugin**: put `morf-no-self-pingbacks.php` in its own folder, `wp-content/plugins/morf-no-self-pingbacks/morf-no-self-pingbacks.php`, and activate it.
-- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
+
+## Requirements
+
+No requirement.
+
+## Uninstalling
+
+Deactivate or delete the snippet or plugin. Nothing is stored in the database: WordPress goes back to its previous behaviour at once.
 
 ## License
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-04 - piwigo-gallery 1.4.0
+
+- New setting `MORF_PIWIGO_CAMERA_FROM_FILENAME` (`true` or `false`) in the settings block: turns the camera-model fallback on the file name on or off. On by default, so behaviour is unchanged. A line removed from the file counts as `true`.
+- When the fallback is off, EXIF results are cached under a separate key, so switching the setting never shows stale results. The existing cache stays valid in the default mode.
+
+## 2026-11-04 - documentation
+
+- piwigo-gallery: the camera-model fallback on the file name is now documented (README, guide, troubleshooting, code comment), with tested examples. Behaviour unchanged.
+- Link to the companion article added to the root README and the piwigo-gallery README.
+
+## 2026-11-04 - cleanup pass
+
+- piwigo-gallery 1.3.1: removed two dead API parameters (`id` and `f_recursive`, ignored by Piwigo; only `cat_id` counts) and a redundant `sslverify` (already the default). No change in behaviour.
+- Documentation: shared installation, update and support sections in the root README; Requirements and Uninstalling sections in every snippet README; the piwigo README no longer duplicates the theming part of the guide.
+- Code Snippets removes the opening `<?php` tag itself when saving: the docs no longer ask to remove it by hand.
+
 ## 2026-11-04 - documentation
 
 - piwigo-gallery: new complete guide (`GUIDE.md`, `GUIDE.fr.md`): installation, shortcode, settings block, how to find a theme's colours and variables (console scripts tested on a Blocksy site), matching roles, dark mode, troubleshooting.

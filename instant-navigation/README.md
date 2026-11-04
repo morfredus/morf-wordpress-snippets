@@ -22,7 +22,15 @@ Near-instant page navigation (prefetch) and loading priority for the main image 
 Use it **either** way:
 
 - **As a plugin**: put `morf-instant-navigation.php` in its own folder, `wp-content/plugins/morf-instant-navigation/morf-instant-navigation.php`, and activate it.
-- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code without the first `<?php` line.
+- **As a snippet** (for example with [Code Snippets](https://wordpress.org/plugins/code-snippets/)): paste the code. Code Snippets removes the opening `<?php` tag when you save (it may show a warning, which you can ignore).
+
+## Requirements
+
+No requirement. The Speculation Rules part works in Chromium-based browsers (Chrome, Edge, Opera); other browsers use the hover and touch fallback.
+
+## Uninstalling
+
+Deactivate or delete the snippet or plugin. Nothing is stored in the database.
 
 ## License
 
